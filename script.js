@@ -1,8 +1,9 @@
 // Instagram Follow Management Tool
-// Versión mejorada y organizada para mayor claridad y funcionalidad
+// Versión mejorada con opciones de ver seguidores y seguidos
 
 function parseFetchString(fetchString) {
 	try {
+		console.log("🔍 Procesando datos del fetch...");
 		const cleanStr = fetchString.trim().replace(/;$/, '');
 		const urlMatch = cleanStr.match(/fetch\("([^"]+)",\s*\{/);
 		if (!urlMatch) throw new Error("No se pudo extraer la URL");
@@ -17,21 +18,21 @@ function parseFetchString(fetchString) {
 
 		return { url, config };
 	} catch (error) {
-		console.error('Error parsing fetch string:', error);
+		console.error('❌ Error al analizar el fetch:', error);
 		return null;
 	}
 }
 
 async function startProcess() {
 	console.log('🌟 Instagram Follow Management Tool 🌟');
+	console.log('🔄 Iniciando proceso...');
 
-	const fetchString = prompt(`Por favor pega aquí el fetch copiado del inspector de red:
-    (Ejemplo: fetch("https://www.instagram.com/api/v1/...", { "headers": {...}, ... })`);
+	const fetchString = prompt("Pega el fetch copiado del inspector de red:");
 	if (!fetchString) return;
 
 	const parsed = parseFetchString(fetchString);
 	if (!parsed) {
-		alert('❌ No se pudo procesar el fetch. Asegúrate de copiarlo completo.');
+		alert('❌ Error procesando el fetch. Asegúrate de copiarlo completo.');
 		return;
 	}
 
@@ -46,14 +47,7 @@ async function startProcess() {
 		mode: parsed.config.mode
 	};
 
-	const option = prompt(`Selecciona una opción:
-1. Ver lista de quienes no te siguen
-2. Dejar de seguir a quienes no te siguen (excluyendo verificados)
-3. Dejar de seguir a TODOS los que no te siguen (incluyendo verificados)
-4. Ver lista de seguidores
-5. Ver lista de seguidos
-
-Ingresa el número de tu opción (1-5):`);
+	const option = prompt("Selecciona una opción:\n1. Ver lista de quienes no te siguen\n2. Dejar de seguir a quienes no te siguen (excluyendo verificados)\n3. Dejar de seguir a TODOS los que no te siguen (incluyendo verificados)\n4. Ver lista de seguidores\n5. Ver lista de seguidos\n\nIngresa el número de tu opción (1-5):");
 
 	switch (option) {
 		case '1':
@@ -77,25 +71,26 @@ Ingresa el número de tu opción (1-5):`);
 }
 
 async function showNonFollowers(config) {
+	console.log('🔎 Obteniendo lista de no seguidores...');
 	const nonFollowers = await getNonFollowers(config, true);
 	displayUsers(nonFollowers, 'No seguidores');
 }
 
 async function showFollowers(config) {
+	console.log('🔎 Obteniendo lista de seguidores...');
 	const followers = await getUsers(config, 'followers', 12, false);
 	displayUsers(followers, 'Seguidores');
 }
 
 async function showFollowing(config) {
+	console.log('🔎 Obteniendo lista de seguidos...');
 	const following = await getUsers(config, 'following', 200, false);
 	displayUsers(following, 'Seguidos');
 }
 
 async function displayUsers(users, title) {
-	const viewOption = prompt(`¿Cómo deseas ver la lista de ${title}?
-1. Como tabla
-2. Solo nombres en array
-Ingresa 1 o 2:`);
+	console.log(`📜 Mostrando lista de ${title}...`);
+	const viewOption = prompt(`¿Cómo deseas ver la lista de ${title}?\n1. Como tabla\n2. Solo nombres en array\nIngresa 1 o 2:`);
 
 	if (viewOption === '1') {
 		console.table(users.map(u => ({ Usuario: `@${u.username}`, Verificado: u.is_verified ? 'Sí' : 'No' })));
@@ -105,14 +100,14 @@ Ingresa 1 o 2:`);
 		alert('Opción no válida. Mostrando como tabla por defecto.');
 		console.table(users.map(u => ({ Usuario: `@${u.username}`, Verificado: u.is_verified ? 'Sí' : 'No' })));
 	}
-
 	alert(`Revisa la consola para ver la lista de ${users.length} cuentas.`);
 }
 
 async function unfollowNonFollowers(config, excludeVerified) {
+	console.log('🚨 Preparando para dejar de seguir cuentas...');
 	const nonFollowers = await getNonFollowers(config, excludeVerified);
 	if (nonFollowers.length === 0) return alert('🎉 No hay cuentas para dejar de seguir!');
-
+	displayUsers(nonFollowers, 'Cuentas que no te siguen');
 	if (confirm(`¿Dejar de seguir a ${nonFollowers.length} cuentas?`)) {
 		await executeUnfollows(config, nonFollowers);
 		alert(`✅ Proceso completado! Se dejaron de seguir ${nonFollowers.length} cuentas.`);
