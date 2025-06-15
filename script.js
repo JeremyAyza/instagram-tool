@@ -90,18 +90,45 @@ async function showFollowing(config) {
 
 async function displayUsers(users, title) {
 	console.log(`📜 Mostrando lista de ${title}...`);
-	const viewOption = prompt(`¿Cómo deseas ver la lista de ${title}?\n1. Como tabla\n2. Solo nombres en array\nIngresa 1 o 2:`);
+	const viewOption = prompt(`¿Cómo deseas ver la lista de ${title}?\n1. Como tabla\n2. Solo nombres en array\n3. Exportar como CSV\nIngresa 1, 2 o 3:`);
 
 	if (viewOption === '1') {
 		console.table(users.map(u => ({ Usuario: `@${u.username}`, Verificado: u.is_verified ? 'Sí' : 'No' })));
 	} else if (viewOption === '2') {
 		console.log(users.map(u => u.username));
+	} else if (viewOption === '3') {
+		// Cabecera
+		const csvHeaders = ['id', 'username', 'is_verified', 'profile_url'];
+		const csvRows = users.map(u => [
+			u.id,
+			u.username,
+			u.is_verified ? 'Sí' : 'No',
+			`https://instagram.com/${u.username}`
+		]);
+
+		const csvContent = [
+			csvHeaders.join(','),
+			...csvRows.map(row => row.map(val => `"${val}"`).join(','))
+		].join('\n');
+
+		const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+		const a = document.createElement('a');
+		a.href = URL.createObjectURL(blob);
+		a.download = `${title.replace(/\s+/g, '_')}_usuarios.csv`;
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+
+		alert(`Archivo CSV generado correctamente con ${users.length} cuentas.`);
 	} else {
 		alert('Opción no válida. Mostrando como tabla por defecto.');
 		console.table(users.map(u => ({ Usuario: `@${u.username}`, Verificado: u.is_verified ? 'Sí' : 'No' })));
 	}
-	alert(`Revisa la consola para ver la lista de ${users.length} cuentas.`);
+
+	alert(`Revisa la consola o el archivo descargado para ver la lista de ${users.length} cuentas.`);
 }
+
+
 
 async function unfollowNonFollowers(config, excludeVerified) {
 	console.log('🚨 Preparando para dejar de seguir cuentas...');
