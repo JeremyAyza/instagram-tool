@@ -195,7 +195,7 @@ async function executeUnfollows(config, users) {
 			});
 
 			console.log(`✅ ${i + 1}/${users.length}: @${users[i].username}`);
-			await delay(i % 5 === 0 ? 9000 : 3000);
+			await delay(i % 5 === 0 ? 1200 : 1500);
 		} catch (error) {
 			console.error(`❌ Error con @${users[i].username}:`, error);
 		}
