@@ -1,5 +1,7 @@
 // Instagram Follow Management Tool
 // Versión mejorada con opciones de ver seguidores y seguidos
+const exluidos = ['5816035004']
+const exluidosName = ['sofiaa.sullon']
 
 function parseFetchString(fetchString) {
 	try {
@@ -179,15 +181,21 @@ async function getUsers(config, type, count, excludeVerified) {
 async function executeUnfollows(config, users) {
 	for (let i = 0;i < users.length;i++) {
 		try {
-			await fetch(`https://www.instagram.com/api/v1/friendships/destroy/${users[i].id}/`, {
+			const {username, id	} = users[i]
+			if(exluidos.includes(String(id)) || exluidosName.includes(username)){
+				console.log('--> Excluido: '+username+'  ' + id)
+				break
+			}
+
+			await fetch(`https://www.instagram.com/api/v1/friendships/destroy/${id}/`, {
 				method: 'POST',
 				headers: { ...config.baseHeaders, 'content-type': 'application/x-www-form-urlencoded' },
-				body: `user_id=${users[i].id}`,
+				body: `user_id=${id}`,
 				credentials: config.credentials
 			});
 
 			console.log(`✅ ${i + 1}/${users.length}: @${users[i].username}`);
-			await delay(i % 5 === 0 ? 90000 : 30000);
+			await delay(i % 5 === 0 ? 9000 : 3000);
 		} catch (error) {
 			console.error(`❌ Error con @${users[i].username}:`, error);
 		}
@@ -197,3 +205,4 @@ async function executeUnfollows(config, users) {
 const delay = ms => new Promise(r => setTimeout(r, ms));
 
 startProcess();
+
