@@ -91,6 +91,7 @@ async function showFollowing(config) {
 }
 
 async function displayUsers(users, title) {
+	downloadCSV(users, title)
 	console.log(`📜 Mostrando lista de ${title}...`);
 	const viewOption = prompt(`¿Cómo deseas ver la lista de ${title}?\n1. Como tabla\n2. Solo nombres en array\n3. Exportar como CSV\nIngresa 1, 2 o 3:`);
 
@@ -100,7 +101,19 @@ async function displayUsers(users, title) {
 		console.log(users.map(u => u.username));
 	} else if (viewOption === '3') {
 		// Cabecera
-		const csvHeaders = ['id', 'username', 'is_verified', 'profile_url'];
+		downloadCSV(users, title)
+
+		alert(`Archivo CSV generado correctamente con ${users.length} cuentas.`);
+	} else {
+		alert('Opción no válida. Mostrando como tabla por defecto.');
+		console.table(users.map(u => ({ Usuario: `@${u.username}`, Verificado: u.is_verified ? 'Sí' : 'No' })));
+	}
+
+	alert(`Revisa la consola o el archivo descargado para ver la lista de ${users.length} cuentas.`);
+}
+
+function downloadCSV (users = [] ,filename='usuarios') {
+	const csvHeaders = ['id', 'username', 'is_verified', 'profile_url'];
 		const csvRows = users.map(u => [
 			u.id,
 			u.username,
@@ -116,21 +129,11 @@ async function displayUsers(users, title) {
 		const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
 		const a = document.createElement('a');
 		a.href = URL.createObjectURL(blob);
-		a.download = `${title.replace(/\s+/g, '_')}_usuarios.csv`;
+		a.download = `${filename.replace(/\s+/g, '_')}_usuarios.csv`;
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);
-
-		alert(`Archivo CSV generado correctamente con ${users.length} cuentas.`);
-	} else {
-		alert('Opción no válida. Mostrando como tabla por defecto.');
-		console.table(users.map(u => ({ Usuario: `@${u.username}`, Verificado: u.is_verified ? 'Sí' : 'No' })));
-	}
-
-	alert(`Revisa la consola o el archivo descargado para ver la lista de ${users.length} cuentas.`);
 }
-
-
 
 async function unfollowNonFollowers(config, excludeVerified) {
 	console.log('🚨 Preparando para dejar de seguir cuentas...');
@@ -174,7 +177,7 @@ async function getUsers(config, type, count, excludeVerified) {
 		nextId = data.next_max_id;
 		await delay(1000);
 	} while (nextId);
-
+	downloadCSV(results, type)
 	return results;
 }
 
@@ -184,18 +187,20 @@ async function executeUnfollows(config, users) {
 			const {username, id	} = users[i]
 			if(exluidos.includes(String(id)) || exluidosName.includes(username)){
 				console.log('--> Excluido: '+username+'  ' + id)
-				break
 			}
+			else{
 
-			await fetch(`https://www.instagram.com/api/v1/friendships/destroy/${id}/`, {
-				method: 'POST',
-				headers: { ...config.baseHeaders, 'content-type': 'application/x-www-form-urlencoded' },
-				body: `user_id=${id}`,
-				credentials: config.credentials
-			});
-
-			console.log(`✅ ${i + 1}/${users.length}: @${users[i].username}`);
-			await delay(i % 5 === 0 ? 1200 : 1500);
+				
+				await fetch(`https://www.instagram.com/api/v1/friendships/destroy/${id}/`, {
+					method: 'POST',
+					headers: { ...config.baseHeaders, 'content-type': 'application/x-www-form-urlencoded' },
+					body: `user_id=${id}`,
+					credentials: config.credentials
+				});
+				
+				console.log(`✅ ${i + 1}/${users.length}: @${users[i].username}`);
+				await delay(i % 5 === 0 ? 500 : 1000);
+			}
 		} catch (error) {
 			console.error(`❌ Error con @${users[i].username}:`, error);
 		}
