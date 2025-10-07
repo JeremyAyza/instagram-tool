@@ -1,7 +1,7 @@
 // Instagram Follow Management Tool
 // Versión mejorada con opciones de ver seguidores y seguidos
-const exluidos = ['5816035004']
-const exluidosName = ['sofiaa.sullon']
+const exluidos = []
+const exluidosName = ['ana_nunez.99']
 
 function parseFetchString(fetchString) {
 	try {
