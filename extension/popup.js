@@ -3,7 +3,7 @@ import { Compare } from './utils/compare.js';
 import { Table } from './components/Table.js';
 
 // --- STATE ---
-const state = {
+const initialState = {
   followers: [],
   following: [],
   nonFollowers: [],
@@ -11,11 +11,14 @@ const state = {
   tableInstance: null
 };
 
+let state = { ...initialState };
+
 // --- DOM ELEMENTS ---
 const els = {
-  // Tabs
+  // Global
   tabs: document.querySelectorAll('.tab-btn'),
   contents: document.querySelectorAll('.content'),
+  btnReset: document.getElementById('btn-reset'),
   
   // Connect
   fetchInput: document.getElementById('fetch-input'),
@@ -40,10 +43,10 @@ const els = {
   btnCompare: document.getElementById('btn-compare'),
   analysisResults: document.getElementById('analysis-results'),
   nonFollowersCount: document.getElementById('non-followers-count'),
+  btnExportNonFollowers: document.getElementById('btn-export-non-followers'),
   
   // Unfollow Buttons
-  btnUnfollowSafe: document.getElementById('btn-unfollow-safe'),
-  btnUnfollowNoVerified: document.getElementById('btn-unfollow-no-verified'),
+  btnUnfollowCommon: document.getElementById('btn-unfollow-common'),
   btnUnfollowAll: document.getElementById('btn-unfollow-all'),
   unfollowProgress: document.getElementById('unfollow-progress'),
   
@@ -57,7 +60,12 @@ const els = {
 
 // --- INIT ---
 document.addEventListener('DOMContentLoaded', async () => {
-  // Load stored data
+  await loadState();
+  setupTabs();
+  setupListeners();
+});
+
+async function loadState() {
   const stored = await chrome.storage.local.get(['localFollowers', 'localFollowing', 'apiConfig']);
   
   if (stored.localFollowers) state.followers = stored.localFollowers;
@@ -66,11 +74,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     state.apiConnected = true;
     updateConnectionUI(true);
   }
-  
   updateStats();
-  setupTabs();
-  setupListeners();
-});
+}
 
 // --- UI HELPERS ---
 function setupTabs() {
@@ -108,13 +113,47 @@ function updateConnectionUI(connected) {
     
     els.btnFetchFollowers.disabled = false;
     els.btnFetchFollowing.disabled = false;
+  } else {
+    els.btnConnect.textContent = '🔗 Conectar API';
+    els.btnConnect.classList.add('btn-primary');
+    els.btnConnect.classList.remove('btn-secondary');
+    els.connectionMsg.classList.add('hidden');
+    els.btnFetchFollowers.disabled = true;
+    els.btnFetchFollowing.disabled = true;
   }
+}
+
+function resetExtension() {
+  if (!confirm('¿Estás seguro de que quieres borrar todos los datos y reiniciar la extensión?')) return;
+  
+  chrome.storage.local.clear(() => {
+    state = { ...initialState };
+    state.followers = [];
+    state.following = [];
+    state.nonFollowers = [];
+    
+    // Reset UI
+    els.fetchInput.value = '';
+    updateConnectionUI(false);
+    updateStats();
+    els.analysisResults.classList.add('hidden');
+    if (state.tableInstance) {
+      document.getElementById('table-container').innerHTML = '';
+      state.tableInstance = null;
+    }
+    
+    alert('Datos borrados. La extensión se ha reiniciado.');
+    location.reload();
+  });
 }
 
 // --- CORE LOGIC ---
 
 function setupListeners() {
   
+  // 0. Reset
+  els.btnReset.addEventListener('click', resetExtension);
+
   // 1. Connect
   els.btnConnect.addEventListener('click', () => {
     const fetchString = els.fetchInput.value;
@@ -153,13 +192,14 @@ function setupListeners() {
   els.btnCompare.addEventListener('click', () => {
     state.nonFollowers = Compare.findNonFollowers(state.followers, state.following);
     renderAnalysis(state.nonFollowers);
-    // Switch tab logic if needed, but we are already there
     els.analysisResults.classList.remove('hidden');
   });
+  
+  // Export Non-Followers
+  els.btnExportNonFollowers.addEventListener('click', () => exportCSV(state.nonFollowers, 'non_followers'));
 
   // 5. Unfollow Buttons
-  els.btnUnfollowSafe.addEventListener('click', () => confirmUnfollow('safe'));
-  els.btnUnfollowNoVerified.addEventListener('click', () => confirmUnfollow('no-verified'));
+  els.btnUnfollowCommon.addEventListener('click', () => confirmUnfollow('common'));
   els.btnUnfollowAll.addEventListener('click', () => confirmUnfollow('all'));
 
   // Modal Cancel
@@ -182,6 +222,7 @@ function handleFile(e, type) {
 }
 
 function exportCSV(data, filename) {
+  if (!data || data.length === 0) return alert('No hay datos para exportar');
   const csvContent = CSV.jsonToCSV(data);
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -217,19 +258,17 @@ function confirmUnfollow(strategy) {
   let title = '';
   
   switch(strategy) {
-    case 'safe':
-      // Excluye verificados Y creadores
+    case 'common':
+      // Heurística para "Usuarios Comunes":
+      // NO verificados, NO creadores, NO privados (opcional, pero suelen ser comunes)
+      // Aquí asumimos que si no es verificado ni creador, es "común".
       targets = state.nonFollowers.filter(u => !u.is_verified && !u.is_creator);
-      title = 'Unfollow Seguro (Excluyendo VIPs)';
+      title = 'Unfollow Comunes (Excluyendo VIPs)';
       break;
-    case 'no-verified':
-      // Excluye solo verificados
-      targets = state.nonFollowers.filter(u => !u.is_verified);
-      title = 'Unfollow (Excluyendo Verificados)';
-      break;
+      
     case 'all':
       targets = state.nonFollowers;
-      title = 'Unfollow A TODOS (Peligroso)';
+      title = '⚠️ Unfollow A TODOS (Peligroso)';
       break;
   }
 
@@ -279,6 +318,5 @@ chrome.runtime.onMessage.addListener((msg) => {
   else if (msg.action === 'UNFOLLOW_COMPLETE') {
     els.unfollowProgress.classList.add('hidden');
     alert(`Proceso finalizado. ${msg.count} cuentas dejadas de seguir.`);
-    // Refresh comparison logic here if desired
   }
 });

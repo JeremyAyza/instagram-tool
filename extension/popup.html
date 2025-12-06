@@ -12,7 +12,12 @@
   <header>
     <div class="header-content">
       <h1>IG Manager <span class="badge-pro">PRO</span></h1>
-      <div id="status-indicator" class="status-dot" title="Desconectado"></div>
+      <div class="header-actions">
+        <button id="btn-reset" class="btn-icon-text" title="Borrar datos y reiniciar">
+          🔄 Reiniciar
+        </button>
+        <div id="status-indicator" class="status-dot" title="Desconectado"></div>
+      </div>
     </div>
   </header>
 
@@ -112,26 +117,24 @@
       <div id="analysis-results" class="hidden">
         <div class="results-header">
           <h3>No te siguen: <span id="non-followers-count" class="count-badge">0</span></h3>
+          <button id="btn-export-non-followers" class="btn btn-outline-orange small">💾 Exportar CSV</button>
         </div>
 
         <!-- Unfollow Actions -->
         <div class="unfollow-actions">
-          <p class="section-title">Acciones Masivas (Peligro ⚠️)</p>
+          <p class="section-title">Acciones Masivas</p>
           
-          <button id="btn-unfollow-safe" class="btn btn-danger-soft">
-            🛡️ Unfollow (Seguro)
-            <span class="tooltip">Excluye verificados y creadores</span>
-          </button>
-          
-          <button id="btn-unfollow-no-verified" class="btn btn-danger-mid">
-            🚫 Unfollow (No Verif.)
-            <span class="tooltip">Excluye solo verificados</span>
-          </button>
-          
-          <button id="btn-unfollow-all" class="btn btn-danger-hard">
-            💀 Unfollow TODOS
-            <span class="tooltip">Borra a todos los de la lista</span>
-          </button>
+          <div class="grid-2">
+            <button id="btn-unfollow-common" class="btn btn-danger-soft">
+              🛡️ Unfollow Comunes
+              <span class="tooltip">Excluye verificados, creadores y VIPs</span>
+            </button>
+            
+            <button id="btn-unfollow-all" class="btn btn-danger-hard">
+              💀 Unfollow TODOS
+              <span class="tooltip">¡Peligro! Borra a todos sin excepción</span>
+            </button>
+          </div>
         </div>
 
         <!-- Table Container -->

@@ -1,4 +1,5 @@
 import { Badge } from './Badge.js';
+import { Buttons } from './Buttons.js';
 
 export class Table {
   constructor(containerId, data, onUnfollow) {
@@ -8,6 +9,7 @@ export class Table {
     this.onUnfollow = onUnfollow;
     this.sortDir = 1;
     this.lastSortKey = null;
+    this.defaultImage = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyaDE2di0yYzAtMi42Ni01LjMzLTQtOC00eiIvPjwvc3ZnPg==';
   }
 
   render() {
@@ -17,7 +19,7 @@ export class Table {
     const controls = document.createElement('div');
     controls.className = 'table-controls';
     controls.innerHTML = `
-      <input type="text" id="table-search" placeholder="Filtrar por usuario..." style="width:100%; padding:8px; margin-bottom:8px; border-radius:4px; border:1px solid #333; background:#1a1d24; color:white;">
+      <input type="text" id="table-search" placeholder="Buscar por usuario, nombre o ID..." class="search-input">
     `;
     this.container.appendChild(controls);
 
@@ -29,65 +31,108 @@ export class Table {
     const thead = document.createElement('thead');
     thead.innerHTML = `
       <tr>
-        <th data-key="username" style="cursor:pointer">Usuario ↕</th>
-        <th data-key="full_name" style="cursor:pointer">Nombre ↕</th>
-        <th data-key="is_verified" style="cursor:pointer; width:40px;">Verif</th>
-        <th style="width:80px;">Acciones</th>
+        <th style="width: 50px;">Foto</th>
+        <th data-key="username" class="sortable">Usuario ↕</th>
+        <th data-key="full_name" class="sortable">Nombre ↕</th>
+        <th data-key="is_verified" class="sortable" style="width:60px;">Verif.</th>
+        <th style="width:80px;">Tipo</th>
+        <th style="width:140px;">Acciones</th>
       </tr>
     `;
     table.appendChild(thead);
 
     // Body
     const tbody = document.createElement('tbody');
-    this.currentData.forEach(u => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>
-          <div style="display:flex; align-items:center;">
-            <img src="${u.profile_pic_url}" onerror="this.style.display='none'" style="width:24px; height:24px; border-radius:50%; margin-right:8px;">
-            <a href="https://instagram.com/${u.username}" target="_blank" style="color:white; text-decoration:none; font-weight:500;">
-              ${u.username}
-            </a>
-            ${Badge.renderBadges(u)}
-          </div>
-        </td>
-        <td style="color:#aaa; font-size:11px;">${u.full_name}</td>
-        <td style="text-align:center;">${u.is_verified ? '✅' : ''}</td>
-        <td></td>
-      `;
-
-      // Action Cell
-      const actionCell = tr.lastElementChild;
-      const btn = document.createElement('button');
-      btn.className = 'btn-danger-outline';
-      btn.textContent = 'Unfollow';
-      btn.style.fontSize = '10px';
-      btn.style.padding = '2px 6px';
-      btn.onclick = () => this.onUnfollow(u, btn);
-      actionCell.appendChild(btn);
-
-      tbody.appendChild(tr);
-    });
     table.appendChild(tbody);
     this.container.appendChild(table);
+    
+    this.tbody = tbody; // Save reference
+    this.renderRows();  // Initial render
 
     // Events
     this.setupEvents(controls, thead);
   }
 
+  renderRows() {
+    this.tbody.innerHTML = '';
+    
+    if (this.currentData.length === 0) {
+      this.tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">No se encontraron resultados</td></tr>';
+      return;
+    }
+
+    this.currentData.forEach(u => {
+      const tr = document.createElement('tr');
+      
+      // Determine Type
+      let userType = 'Común';
+      if (u.is_verified) userType = 'Verificado';
+      else if (u.is_creator) userType = 'Creador';
+      else if (u.is_private) userType = 'Privado';
+
+      // Image Handling
+      const imgSrc = u.profile_pic_url && u.profile_pic_url.startsWith('http') ? u.profile_pic_url : this.defaultImage;
+
+      tr.innerHTML = `
+        <td>
+          <img src="${imgSrc}" class="user-avatar" alt="pic">
+        </td>
+        <td>
+          <div class="user-info">
+            <span class="username">@${u.username}</span>
+            ${Badge.renderBadges(u)}
+          </div>
+        </td>
+        <td class="text-muted">${u.full_name || '-'}</td>
+        <td class="text-center">${u.is_verified ? '✅' : ''}</td>
+        <td class="text-muted" style="font-size:11px;">${userType}</td>
+        <td>
+          <div class="action-buttons">
+            <!-- Buttons injected via JS -->
+          </div>
+        </td>
+      `;
+
+      // Inject Buttons
+      const actionsDiv = tr.querySelector('.action-buttons');
+      
+      // 1. View Profile
+      const btnProfile = Buttons.iconBtn('🔗', 'Ver Perfil', () => {
+        window.open(`https://instagram.com/${u.username}`, '_blank');
+      }, '#0095f6');
+      btnProfile.classList.add('btn-icon');
+      actionsDiv.appendChild(btnProfile);
+
+      // 2. Unfollow
+      const btnUnfollow = document.createElement('button');
+      btnUnfollow.className = 'btn-danger-outline small-btn';
+      btnUnfollow.textContent = 'Unfollow';
+      btnUnfollow.onclick = () => this.onUnfollow(u, btnUnfollow);
+      actionsDiv.appendChild(btnUnfollow);
+
+      // Image Error Handler
+      const img = tr.querySelector('img');
+      img.onerror = () => { img.src = this.defaultImage; };
+
+      this.tbody.appendChild(tr);
+    });
+  }
+
   setupEvents(controls, thead) {
     // Search
-    controls.querySelector('#table-search').addEventListener('input', (e) => {
+    const searchInput = controls.querySelector('#table-search');
+    searchInput.addEventListener('input', (e) => {
       const term = e.target.value.toLowerCase();
       this.currentData = this.originalData.filter(u => 
-        u.username.toLowerCase().includes(term) || 
-        u.full_name.toLowerCase().includes(term)
+        (u.username && u.username.toLowerCase().includes(term)) || 
+        (u.full_name && u.full_name.toLowerCase().includes(term)) ||
+        (u.id && String(u.id).includes(term))
       );
-      this.renderBodyOnly();
+      this.renderRows();
     });
 
     // Sort
-    thead.querySelectorAll('th[data-key]').forEach(th => {
+    thead.querySelectorAll('th.sortable').forEach(th => {
       th.addEventListener('click', () => {
         const key = th.dataset.key;
         if (this.lastSortKey === key) this.sortDir *= -1;
@@ -95,50 +140,15 @@ export class Table {
         this.lastSortKey = key;
 
         this.currentData.sort((a, b) => {
-          if (a[key] < b[key]) return -1 * this.sortDir;
-          if (a[key] > b[key]) return 1 * this.sortDir;
+          const valA = a[key] || '';
+          const valB = b[key] || '';
+          
+          if (valA < valB) return -1 * this.sortDir;
+          if (valA > valB) return 1 * this.sortDir;
           return 0;
         });
-        this.renderBodyOnly();
+        this.renderRows();
       });
-    });
-  }
-
-  renderBodyOnly() {
-    // Re-render just the body (simplified for this demo, usually we'd diff)
-    // For simplicity in vanilla JS, we can just re-render the whole table or swap tbody
-    // Let's just re-call render() but keep focus if possible. 
-    // Actually, re-rendering the whole thing is easiest for this scale.
-    // But to keep input focus, we shouldn't destroy the input.
-    // Let's just update the tbody.
-    const tbody = this.container.querySelector('tbody');
-    tbody.innerHTML = '';
-    
-    this.currentData.forEach(u => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>
-          <div style="display:flex; align-items:center;">
-            <img src="${u.profile_pic_url}" onerror="this.style.display='none'" style="width:24px; height:24px; border-radius:50%; margin-right:8px;">
-            <a href="https://instagram.com/${u.username}" target="_blank" style="color:white; text-decoration:none; font-weight:500;">
-              ${u.username}
-            </a>
-            ${Badge.renderBadges(u)}
-          </div>
-        </td>
-        <td style="color:#aaa; font-size:11px;">${u.full_name}</td>
-        <td style="text-align:center;">${u.is_verified ? '✅' : ''}</td>
-        <td></td>
-      `;
-      const actionCell = tr.lastElementChild;
-      const btn = document.createElement('button');
-      btn.className = 'btn-danger-outline';
-      btn.textContent = 'Unfollow';
-      btn.style.fontSize = '10px';
-      btn.style.padding = '2px 6px';
-      btn.onclick = () => this.onUnfollow(u, btn);
-      actionCell.appendChild(btn);
-      tbody.appendChild(tr);
     });
   }
 }
