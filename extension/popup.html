@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IG Follow Manager PRO</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <h1>IG Manager <span class="badge">PRO</span></h1>
+    <div id="status-indicator" style="width: 8px; height: 8px; border-radius: 50%; background: #444;"></div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="connect">Conexión</button>
+    <button class="tab-btn" data-tab="data">Datos</button>
+    <button class="tab-btn" data-tab="analyze">Análisis</button>
+  </div>
+
+  <!-- TAB 1: CONEXIÓN -->
+  <div id="connect" class="content active">
+    <div class="card">
+      <div class="input-group">
+        <label>Pegar Fetch (Copia desde Network Tab)</label>
+        <textarea id="fetch-input" placeholder='fetch("https://www.instagram.com/api/v1/friendships/...'></textarea>
+      </div>
+      <button id="btn-connect" class="btn btn-primary">Conectar API</button>
+      <div id="connection-msg" class="alert" style="margin-top: 10px;"></div>
+    </div>
+
+    <div class="card">
+      <label>Descarga Directa (API)</label>
+      <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+        <button id="btn-fetch-followers" class="btn btn-secondary" disabled>
+          ⬇ Seguidores
+        </button>
+        <button id="btn-fetch-following" class="btn btn-secondary" disabled>
+          ⬇ Seguidos
+        </button>
+      </div>
+      
+      <div class="progress-container" id="api-progress">
+        <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+        <div class="progress-text">Procesando...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: DATOS -->
+  <div id="data" class="content">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <span class="stat-value" id="count-followers">0</span>
+        <span class="stat-label">Seguidores</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value" id="count-following">0</span>
+        <span class="stat-label">Seguidos</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <label>Importar CSVs Locales</label>
+      <div class="file-upload btn btn-secondary">
+        <span>📂 Subir Followers.csv</span>
+        <input type="file" id="file-followers" accept=".csv">
+      </div>
+      <div class="file-upload btn btn-secondary">
+        <span>📂 Subir Following.csv</span>
+        <input type="file" id="file-following" accept=".csv">
+      </div>
+    </div>
+
+    <div class="card">
+      <label>Exportar Datos Actuales</label>
+      <div style="display: flex; gap: 8px;">
+        <button id="btn-export-followers" class="btn btn-secondary" disabled>Exportar CSV</button>
+        <button id="btn-export-following" class="btn btn-secondary" disabled>Exportar CSV</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: ANÁLISIS -->
+  <div id="analyze" class="content">
+    <div class="card">
+      <button id="btn-compare" class="btn btn-primary" disabled>🔍 Comparar (Quién no me sigue)</button>
+    </div>
+
+    <div id="analysis-results" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h3 style="font-size: 14px;">No te siguen: <span id="non-followers-count">0</span></h3>
+        <button id="btn-unfollow-all" class="btn btn-danger" style="width: auto; padding: 4px 12px; font-size: 11px;">Dejar de seguir a todos</button>
+      </div>
+
+      <div class="results-table-container">
+        <table id="results-table">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Verificado</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Rows generated via JS -->
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="progress-container" id="unfollow-progress">
+        <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+        <div class="progress-text">Dejando de seguir...</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
