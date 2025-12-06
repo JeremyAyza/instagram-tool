@@ -604,3 +604,32 @@ textarea:focus {
 	color: var(--green);
 	border: 1px solid var(--green);
 }
+
+/* New Status Styles */
+.last-update {
+	font-size: 10px;
+	color: var(--text-muted);
+	margin-top: 4px;
+}
+
+.file-info {
+	display: flex;
+	flex-direction: column;
+}
+
+.label {
+	font-size: 11px;
+	color: var(--text-muted);
+}
+
+.status-text {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--text-muted);
+}
+
+.btn-group {
+	display: flex;
+	gap: 6px;
+	align-items: center;
+}

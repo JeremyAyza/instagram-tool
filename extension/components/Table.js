@@ -62,6 +62,7 @@ export class Table {
     }
 
     this.currentData.forEach(u => {
+			console.log(u)
       const tr = document.createElement('tr');
       
       // Determine Type
@@ -71,6 +72,7 @@ export class Table {
       else if (u.is_private) userType = 'Privado';
 
       // Image Handling
+			console.log(1, u.profile_pic_url)
       const imgSrc = u.profile_pic_url && u.profile_pic_url.startsWith('http') ? u.profile_pic_url : this.defaultImage;
 
       tr.innerHTML = `

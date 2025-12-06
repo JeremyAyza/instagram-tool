@@ -77,10 +77,12 @@
         <div class="stat-card blue">
           <span class="stat-value" id="count-followers">0</span>
           <span class="stat-label">Seguidores</span>
+          <div id="last-update-followers" class="last-update">--</div>
         </div>
         <div class="stat-card purple">
           <span class="stat-value" id="count-following">0</span>
           <span class="stat-label">Seguidos</span>
+          <div id="last-update-following" class="last-update">--</div>
         </div>
       </div>
 
@@ -88,20 +90,34 @@
         <h3>Importar / Exportar</h3>
         <p class="helper-text">Gestiona tus archivos CSV locales.</p>
         
+        <!-- Followers Row -->
         <div class="action-row">
-          <div class="file-input-wrapper">
-            <button class="btn btn-outline-blue small">📂 Cargar Followers</button>
-            <input type="file" id="file-followers" accept=".csv">
+          <div class="file-info">
+            <span class="label">Seguidores:</span>
+            <span id="status-followers" class="status-text">Vacío</span>
           </div>
-          <button id="btn-export-followers" class="btn btn-text small" disabled>💾 Guardar CSV</button>
+          <div class="btn-group">
+             <div class="file-input-wrapper">
+              <button class="btn btn-outline-blue small">📂 Cargar</button>
+              <input type="file" id="file-followers" accept=".csv">
+            </div>
+            <button id="btn-export-followers" class="btn btn-text small" disabled>💾 Guardar</button>
+          </div>
         </div>
 
+        <!-- Following Row -->
         <div class="action-row">
-          <div class="file-input-wrapper">
-            <button class="btn btn-outline-purple small">📂 Cargar Following</button>
-            <input type="file" id="file-following" accept=".csv">
+          <div class="file-info">
+            <span class="label">Seguidos:</span>
+            <span id="status-following" class="status-text">Vacío</span>
           </div>
-          <button id="btn-export-following" class="btn btn-text small" disabled>💾 Guardar CSV</button>
+          <div class="btn-group">
+            <div class="file-input-wrapper">
+              <button class="btn btn-outline-purple small">📂 Cargar</button>
+              <input type="file" id="file-following" accept=".csv">
+            </div>
+            <button id="btn-export-following" class="btn btn-text small" disabled>💾 Guardar</button>
+          </div>
         </div>
       </div>
     </section>
@@ -111,7 +127,7 @@
       <div class="card highlight-card">
         <h3>Comparar Listas</h3>
         <p class="helper-text">Descubre quién no te sigue de vuelta.</p>
-        <button id="btn-compare" class="btn btn-orange full-width" disabled>🔍 Analizar Diferencias</button>
+        <button id="btn-compare" class="btn btn-orange full-width small" disabled>🔍 Analizar Diferencias</button>
       </div>
 
       <div id="analysis-results" class="hidden">
@@ -125,12 +141,12 @@
           <p class="section-title">Acciones Masivas</p>
           
           <div class="grid-2">
-            <button id="btn-unfollow-common" class="btn btn-danger-soft">
+            <button id="btn-unfollow-common" class="btn btn-danger-soft small">
               🛡️ Unfollow Comunes
               <span class="tooltip">Excluye verificados, creadores y VIPs</span>
             </button>
             
-            <button id="btn-unfollow-all" class="btn btn-danger-hard">
+            <button id="btn-unfollow-all" class="btn btn-danger-hard small">
               💀 Unfollow TODOS
               <span class="tooltip">¡Peligro! Borra a todos sin excepción</span>
             </button>

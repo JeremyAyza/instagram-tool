@@ -61,17 +61,12 @@ export const InstagramAPI = {
         
         const data = await response.json();
 
-        // Mapeo extendido de datos
+        // Mapeo extendido: Guardamos TODO lo que viene
         const newUsers = data.users.map(u => ({
-          id: u.pk,
-          pk: u.pk,
-          username: u.username,
-          full_name: u.full_name || '',
-          is_verified: u.is_verified || false,
-          is_private: u.is_private || false,
-          profile_pic_url: u.profile_pic_url || '',
-          is_creator: u.account_badges?.some(b => b.type === 'creator') || false, // Inferencia simple
-          latest_reel_media: u.latest_reel_media || 0
+          ...u, // Spread de todos los campos originales (pk, fbid_v2, etc)
+          id: u.pk, // Asegurar ID estándar
+          is_creator: u.account_badges?.some(b => b.type === 'creator') || false, // Campo derivado útil
+          profile_url: `https://instagram.com/${u.username}` // Campo derivado útil
         }));
 
         results.push(...newUsers);

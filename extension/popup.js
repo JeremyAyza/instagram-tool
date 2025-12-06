@@ -8,7 +8,11 @@ const initialState = {
   following: [],
   nonFollowers: [],
   apiConnected: false,
-  tableInstance: null
+  tableInstance: null,
+  lastUpdate: {
+    followers: null,
+    following: null
+  }
 };
 
 let state = { ...initialState };
@@ -32,6 +36,10 @@ const els = {
   apiProgress: document.getElementById('api-progress'),
   countFollowers: document.getElementById('count-followers'),
   countFollowing: document.getElementById('count-following'),
+  lastUpdateFollowers: document.getElementById('last-update-followers'),
+  lastUpdateFollowing: document.getElementById('last-update-following'),
+  statusFollowers: document.getElementById('status-followers'),
+  statusFollowing: document.getElementById('status-following'),
   
   // Files
   fileFollowers: document.getElementById('file-followers'),
@@ -66,10 +74,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadState() {
-  const stored = await chrome.storage.local.get(['localFollowers', 'localFollowing', 'apiConfig']);
+  const stored = await chrome.storage.local.get(['localFollowers', 'localFollowing', 'apiConfig', 'lastUpdate']);
   
   if (stored.localFollowers) state.followers = stored.localFollowers;
   if (stored.localFollowing) state.following = stored.localFollowing;
+  if (stored.lastUpdate) state.lastUpdate = stored.lastUpdate;
+  
   if (stored.apiConfig) {
     state.apiConnected = true;
     updateConnectionUI(true);
@@ -90,9 +100,21 @@ function setupTabs() {
 }
 
 function updateStats() {
+  // Counts
   els.countFollowers.textContent = state.followers.length;
   els.countFollowing.textContent = state.following.length;
   
+  // Status Text
+  els.statusFollowers.textContent = state.followers.length > 0 ? 'Cargado' : 'Vacío';
+  els.statusFollowing.textContent = state.following.length > 0 ? 'Cargado' : 'Vacío';
+  els.statusFollowers.style.color = state.followers.length > 0 ? 'var(--green)' : 'var(--text-muted)';
+  els.statusFollowing.style.color = state.following.length > 0 ? 'var(--green)' : 'var(--text-muted)';
+
+  // Timestamps
+  els.lastUpdateFollowers.textContent = state.lastUpdate.followers ? `Updated: ${new Date(state.lastUpdate.followers).toLocaleTimeString()}` : '--';
+  els.lastUpdateFollowing.textContent = state.lastUpdate.following ? `Updated: ${new Date(state.lastUpdate.following).toLocaleTimeString()}` : '--';
+
+  // Buttons State
   const hasData = state.followers.length > 0 && state.following.length > 0;
   els.btnCompare.disabled = !hasData;
   els.btnExportFollowers.disabled = state.followers.length === 0;
@@ -128,10 +150,6 @@ function resetExtension() {
   
   chrome.storage.local.clear(() => {
     state = { ...initialState };
-    state.followers = [];
-    state.following = [];
-    state.nonFollowers = [];
-    
     // Reset UI
     els.fetchInput.value = '';
     updateConnectionUI(false);
@@ -145,6 +163,13 @@ function resetExtension() {
     alert('Datos borrados. La extensión se ha reiniciado.');
     location.reload();
   });
+}
+
+function updateLastModified(type) {
+  const now = Date.now();
+  state.lastUpdate[type] = now;
+  chrome.storage.local.set({ lastUpdate: state.lastUpdate });
+  updateStats();
 }
 
 // --- CORE LOGIC ---
@@ -215,8 +240,8 @@ function handleFile(e, type) {
     const data = CSV.parseCSV(ev.target.result);
     state[type] = data;
     chrome.storage.local.set({ [type === 'followers' ? 'localFollowers' : 'localFollowing']: data });
-    updateStats();
-    alert(`Cargados ${data.length} usuarios.`);
+    updateLastModified(type);
+    alert(`Cargados ${data.length} usuarios en ${type}.`);
   };
   reader.readAsText(file);
 }
@@ -302,7 +327,7 @@ chrome.runtime.onMessage.addListener((msg) => {
   
   else if (msg.action === 'FETCH_COMPLETE') {
     state[msg.type] = msg.data;
-    updateStats();
+    updateLastModified(msg.type);
     els.apiProgress.classList.add('hidden');
     alert(`Completado: ${msg.count} usuarios obtenidos.`);
   }
