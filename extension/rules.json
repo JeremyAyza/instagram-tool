@@ -1,0 +1,62 @@
+[
+	{
+		"id": 1,
+		"priority": 1,
+		"action": {
+			"type": "modifyHeaders",
+			"requestHeaders": [
+				{
+					"header": "Sec-Fetch-Site",
+					"operation": "set",
+					"value": "same-origin"
+				},
+				{
+					"header": "Sec-Fetch-Mode",
+					"operation": "set",
+					"value": "cors"
+				},
+				{
+					"header": "Sec-Fetch-Dest",
+					"operation": "set",
+					"value": "empty"
+				},
+				{
+					"header": "sec-ch-ua",
+					"operation": "set",
+					"value": "\"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\", \"Not-A.Brand\";v=\"99\""
+				},
+				{
+					"header": "sec-ch-ua-mobile",
+					"operation": "set",
+					"value": "?0"
+				},
+				{
+					"header": "sec-ch-ua-platform",
+					"operation": "set",
+					"value": "\"Windows\""
+				},
+				{
+					"header": "sec-ch-ua-full-version-list",
+					"operation": "set",
+					"value": "\"Chromium\";v=\"124.0.0.0\", \"Google Chrome\";v=\"124.0.0.0\", \"Not-A.Brand\";v=\"99.0.0.0\""
+				},
+				{
+					"header": "sec-ch-prefers-color-scheme",
+					"operation": "set",
+					"value": "dark"
+				},
+				{
+					"header": "Referer",
+					"operation": "set",
+					"value": "https://www.instagram.com/"
+				}
+			]
+		},
+		"condition": {
+			"urlFilter": "instagram.com/api/v1/friendships",
+			"resourceTypes": [
+				"xmlhttprequest"
+			]
+		}
+	}
+]
