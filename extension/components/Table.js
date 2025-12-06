@@ -62,7 +62,6 @@ export class Table {
     }
 
     this.currentData.forEach(u => {
-			console.log(u)
       const tr = document.createElement('tr');
       
       // Determine Type
@@ -71,13 +70,12 @@ export class Table {
       else if (u.is_creator) userType = 'Creador';
       else if (u.is_private) userType = 'Privado';
 
-      // Image Handling
-			console.log(1, u.profile_pic_url)
-      const imgSrc = u.profile_pic_url && u.profile_pic_url.startsWith('http') ? u.profile_pic_url : this.defaultImage;
+      // Image Handling - Button instead of IMG to avoid CORS
+      const hasImage = u.profile_pic_url && u.profile_pic_url.startsWith('http');
 
       tr.innerHTML = `
-        <td>
-          <img src="${imgSrc}" class="user-avatar" alt="pic">
+        <td style="text-align: center;">
+          <!-- Image Button placeholder -->
         </td>
         <td>
           <div class="user-info">
@@ -95,7 +93,19 @@ export class Table {
         </td>
       `;
 
-      // Inject Buttons
+      // Inject Image Button
+      const imgCell = tr.querySelector('td:first-child');
+      if (hasImage) {
+        const btnImg = Buttons.iconBtn('📷', 'Abrir foto en nueva pestaña', () => {
+          window.open(u.profile_pic_url, '_blank');
+        }, '#a0a0a0');
+        btnImg.style.fontSize = '14px';
+        imgCell.appendChild(btnImg);
+      } else {
+        imgCell.innerHTML = '<span style="color:#444; font-size:10px;">N/A</span>';
+      }
+
+      // Inject Action Buttons
       const actionsDiv = tr.querySelector('.action-buttons');
       
       // 1. View Profile
@@ -111,10 +121,6 @@ export class Table {
       btnUnfollow.textContent = 'Unfollow';
       btnUnfollow.onclick = () => this.onUnfollow(u, btnUnfollow);
       actionsDiv.appendChild(btnUnfollow);
-
-      // Image Error Handler
-      const img = tr.querySelector('img');
-      img.onerror = () => { img.src = this.defaultImage; };
 
       this.tbody.appendChild(tr);
     });
