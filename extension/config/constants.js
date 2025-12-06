@@ -1,7 +1,7 @@
 export const CONFIG = {
   // Delays (en milisegundos)
-  GET_FOLLOWERS_DELAY: 1200,      // Tiempo entre páginas de seguidores
-  GET_FOLLOWING_DELAY: 1500,      // Tiempo entre páginas de seguidos
+  GET_FOLLOWERS_DELAY: 1500,      // Tiempo entre páginas de seguidores
+  GET_FOLLOWING_DELAY: 1000,      // Tiempo entre páginas de seguidos
   UNFOLLOW_DELAY: 2000,           // Tiempo base entre unfollows
   UNFOLLOW_DELAY_EXTRA: 1000,     // Tiempo extra aleatorio (0 - 1000ms)
   
