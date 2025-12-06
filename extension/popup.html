@@ -7,110 +7,154 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
+  
+  <!-- HEADER -->
   <header>
-    <h1>IG Manager <span class="badge">PRO</span></h1>
-    <div id="status-indicator" style="width: 8px; height: 8px; border-radius: 50%; background: #444;"></div>
+    <div class="header-content">
+      <h1>IG Manager <span class="badge-pro">PRO</span></h1>
+      <div id="status-indicator" class="status-dot" title="Desconectado"></div>
+    </div>
   </header>
 
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="connect">Conexión</button>
-    <button class="tab-btn" data-tab="data">Datos</button>
-    <button class="tab-btn" data-tab="analyze">Análisis</button>
-  </div>
+  <!-- TABS -->
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="connect">
+      <span class="icon">🔌</span> Conexión
+    </button>
+    <button class="tab-btn" data-tab="data">
+      <span class="icon">💾</span> Datos
+    </button>
+    <button class="tab-btn" data-tab="analyze">
+      <span class="icon">📊</span> Análisis
+    </button>
+  </nav>
 
-  <!-- TAB 1: CONEXIÓN -->
-  <div id="connect" class="content active">
-    <div class="card">
-      <div class="input-group">
-        <label>Pegar Fetch (Copia desde Network Tab)</label>
-        <textarea id="fetch-input" placeholder='fetch("https://www.instagram.com/api/v1/friendships/...'></textarea>
-      </div>
-      <button id="btn-connect" class="btn btn-primary">Conectar API</button>
-      <div id="connection-msg" class="alert" style="margin-top: 10px;"></div>
-    </div>
-
-    <div class="card">
-      <label>Descarga Directa (API)</label>
-      <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-        <button id="btn-fetch-followers" class="btn btn-secondary" disabled>
-          ⬇ Seguidores
-        </button>
-        <button id="btn-fetch-following" class="btn btn-secondary" disabled>
-          ⬇ Seguidos
-        </button>
-      </div>
-      
-      <div class="progress-container" id="api-progress">
-        <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
-        <div class="progress-text">Procesando...</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TAB 2: DATOS -->
-  <div id="data" class="content">
-    <div class="stats-grid">
-      <div class="stat-item">
-        <span class="stat-value" id="count-followers">0</span>
-        <span class="stat-label">Seguidores</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-value" id="count-following">0</span>
-        <span class="stat-label">Seguidos</span>
-      </div>
-    </div>
-
-    <div class="card">
-      <label>Importar CSVs Locales</label>
-      <div class="file-upload btn btn-secondary">
-        <span>📂 Subir Followers.csv</span>
-        <input type="file" id="file-followers" accept=".csv">
-      </div>
-      <div class="file-upload btn btn-secondary">
-        <span>📂 Subir Following.csv</span>
-        <input type="file" id="file-following" accept=".csv">
-      </div>
-    </div>
-
-    <div class="card">
-      <label>Exportar Datos Actuales</label>
-      <div style="display: flex; gap: 8px;">
-        <button id="btn-export-followers" class="btn btn-secondary" disabled>Exportar CSV</button>
-        <button id="btn-export-following" class="btn btn-secondary" disabled>Exportar CSV</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- TAB 3: ANÁLISIS -->
-  <div id="analyze" class="content">
-    <div class="card">
-      <button id="btn-compare" class="btn btn-primary" disabled>🔍 Comparar (Quién no me sigue)</button>
-    </div>
-
-    <div id="analysis-results" style="display: none;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <h3 style="font-size: 14px;">No te siguen: <span id="non-followers-count">0</span></h3>
-        <button id="btn-unfollow-all" class="btn btn-danger" style="width: auto; padding: 4px 12px; font-size: 11px;">Dejar de seguir a todos</button>
+  <!-- MAIN CONTENT -->
+  <main>
+    
+    <!-- TAB 1: CONEXIÓN -->
+    <section id="connect" class="content active">
+      <div class="card">
+        <h3>1. Conectar con Instagram</h3>
+        <p class="helper-text">Pega el código 'fetch' desde la pestaña Network de las herramientas de desarrollador.</p>
+        <div class="input-group">
+          <textarea id="fetch-input" placeholder='fetch("https://www.instagram.com/api/v1/friendships/...'></textarea>
+        </div>
+        <button id="btn-connect" class="btn btn-primary full-width">🔗 Conectar API</button>
+        <div id="connection-msg" class="alert hidden"></div>
       </div>
 
-      <div class="results-table-container">
-        <table id="results-table">
-          <thead>
-            <tr>
-              <th>Usuario</th>
-              <th>Verificado</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Rows generated via JS -->
-          </tbody>
-        </table>
+      <div class="card">
+        <h3>2. Descargar Datos</h3>
+        <p class="helper-text">Obtén tus listas actuales directamente desde la API.</p>
+        <div class="grid-2">
+          <button id="btn-fetch-followers" class="btn btn-blue" disabled>
+            ⬇ Seguidores
+            <span class="tooltip">Descarga tu lista de seguidores</span>
+          </button>
+          <button id="btn-fetch-following" class="btn btn-purple" disabled>
+            ⬇ Seguidos
+            <span class="tooltip">Descarga a quién sigues</span>
+          </button>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="progress-container hidden" id="api-progress">
+          <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+          <div class="progress-text">Procesando...</div>
+        </div>
       </div>
-      
-      <div class="progress-container" id="unfollow-progress">
-        <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
-        <div class="progress-text">Dejando de seguir...</div>
+    </section>
+
+    <!-- TAB 2: DATOS -->
+    <section id="data" class="content">
+      <div class="stats-container">
+        <div class="stat-card blue">
+          <span class="stat-value" id="count-followers">0</span>
+          <span class="stat-label">Seguidores</span>
+        </div>
+        <div class="stat-card purple">
+          <span class="stat-value" id="count-following">0</span>
+          <span class="stat-label">Seguidos</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Importar / Exportar</h3>
+        <p class="helper-text">Gestiona tus archivos CSV locales.</p>
+        
+        <div class="action-row">
+          <div class="file-input-wrapper">
+            <button class="btn btn-outline-blue small">📂 Cargar Followers</button>
+            <input type="file" id="file-followers" accept=".csv">
+          </div>
+          <button id="btn-export-followers" class="btn btn-text small" disabled>💾 Guardar CSV</button>
+        </div>
+
+        <div class="action-row">
+          <div class="file-input-wrapper">
+            <button class="btn btn-outline-purple small">📂 Cargar Following</button>
+            <input type="file" id="file-following" accept=".csv">
+          </div>
+          <button id="btn-export-following" class="btn btn-text small" disabled>💾 Guardar CSV</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: ANÁLISIS -->
+    <section id="analyze" class="content">
+      <div class="card highlight-card">
+        <h3>Comparar Listas</h3>
+        <p class="helper-text">Descubre quién no te sigue de vuelta.</p>
+        <button id="btn-compare" class="btn btn-orange full-width" disabled>🔍 Analizar Diferencias</button>
+      </div>
+
+      <div id="analysis-results" class="hidden">
+        <div class="results-header">
+          <h3>No te siguen: <span id="non-followers-count" class="count-badge">0</span></h3>
+        </div>
+
+        <!-- Unfollow Actions -->
+        <div class="unfollow-actions">
+          <p class="section-title">Acciones Masivas (Peligro ⚠️)</p>
+          
+          <button id="btn-unfollow-safe" class="btn btn-danger-soft">
+            🛡️ Unfollow (Seguro)
+            <span class="tooltip">Excluye verificados y creadores</span>
+          </button>
+          
+          <button id="btn-unfollow-no-verified" class="btn btn-danger-mid">
+            🚫 Unfollow (No Verif.)
+            <span class="tooltip">Excluye solo verificados</span>
+          </button>
+          
+          <button id="btn-unfollow-all" class="btn btn-danger-hard">
+            💀 Unfollow TODOS
+            <span class="tooltip">Borra a todos los de la lista</span>
+          </button>
+        </div>
+
+        <!-- Table Container -->
+        <div id="table-container" class="table-wrapper"></div>
+        
+        <!-- Unfollow Progress -->
+        <div class="progress-container hidden" id="unfollow-progress">
+          <div class="progress-bar red"><div class="progress-fill" style="width: 0%"></div></div>
+          <div class="progress-text">Eliminando...</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL CONFIRMATION -->
+  <div id="confirm-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3 id="modal-title">¿Estás seguro?</h3>
+      <p id="modal-desc">Esta acción dejará de seguir a X personas.</p>
+      <div class="modal-actions">
+        <button id="modal-cancel" class="btn btn-secondary">Cancelar</button>
+        <button id="modal-confirm" class="btn btn-danger">Confirmar</button>
       </div>
     </div>
   </div>

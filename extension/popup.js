@@ -1,66 +1,83 @@
 import { CSV } from './utils/csv.js';
 import { Compare } from './utils/compare.js';
+import { Table } from './components/Table.js';
 
-// State
-let state = {
+// --- STATE ---
+const state = {
   followers: [],
   following: [],
   nonFollowers: [],
-  apiConnected: false
+  apiConnected: false,
+  tableInstance: null
 };
 
-// DOM Elements
+// --- DOM ELEMENTS ---
 const els = {
+  // Tabs
+  tabs: document.querySelectorAll('.tab-btn'),
+  contents: document.querySelectorAll('.content'),
+  
+  // Connect
   fetchInput: document.getElementById('fetch-input'),
   btnConnect: document.getElementById('btn-connect'),
   connectionMsg: document.getElementById('connection-msg'),
+  statusIndicator: document.getElementById('status-indicator'),
+  
+  // Data
   btnFetchFollowers: document.getElementById('btn-fetch-followers'),
   btnFetchFollowing: document.getElementById('btn-fetch-following'),
   apiProgress: document.getElementById('api-progress'),
   countFollowers: document.getElementById('count-followers'),
   countFollowing: document.getElementById('count-following'),
+  
+  // Files
   fileFollowers: document.getElementById('file-followers'),
   fileFollowing: document.getElementById('file-following'),
+  btnExportFollowers: document.getElementById('btn-export-followers'),
+  btnExportFollowing: document.getElementById('btn-export-following'),
+  
+  // Analyze
   btnCompare: document.getElementById('btn-compare'),
-  resultsArea: document.getElementById('analysis-results'),
-  resultsTable: document.getElementById('results-table').querySelector('tbody'),
+  analysisResults: document.getElementById('analysis-results'),
   nonFollowersCount: document.getElementById('non-followers-count'),
+  
+  // Unfollow Buttons
+  btnUnfollowSafe: document.getElementById('btn-unfollow-safe'),
+  btnUnfollowNoVerified: document.getElementById('btn-unfollow-no-verified'),
   btnUnfollowAll: document.getElementById('btn-unfollow-all'),
   unfollowProgress: document.getElementById('unfollow-progress'),
-  btnExportFollowers: document.getElementById('btn-export-followers'),
-  btnExportFollowing: document.getElementById('btn-export-following')
+  
+  // Modal
+  modal: document.getElementById('confirm-modal'),
+  modalTitle: document.getElementById('modal-title'),
+  modalDesc: document.getElementById('modal-desc'),
+  modalConfirm: document.getElementById('modal-confirm'),
+  modalCancel: document.getElementById('modal-cancel')
 };
 
-// --- INITIALIZATION ---
-
+// --- INIT ---
 document.addEventListener('DOMContentLoaded', async () => {
-  // Load saved data
+  // Load stored data
   const stored = await chrome.storage.local.get(['localFollowers', 'localFollowing', 'apiConfig']);
   
-  if (stored.localFollowers) {
-    state.followers = stored.localFollowers;
-    updateStats();
-  }
-  if (stored.localFollowing) {
-    state.following = stored.localFollowing;
-    updateStats();
-  }
+  if (stored.localFollowers) state.followers = stored.localFollowers;
+  if (stored.localFollowing) state.following = stored.localFollowing;
   if (stored.apiConfig) {
     state.apiConnected = true;
     updateConnectionUI(true);
   }
-
+  
+  updateStats();
   setupTabs();
   setupListeners();
 });
 
 // --- UI HELPERS ---
-
 function setupTabs() {
-  document.querySelectorAll('.tab-btn').forEach(btn => {
+  els.tabs.forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+      els.tabs.forEach(b => b.classList.remove('active'));
+      els.contents.forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById(btn.dataset.tab).classList.add('active');
     });
@@ -78,162 +95,190 @@ function updateStats() {
 }
 
 function updateConnectionUI(connected) {
-  els.btnConnect.textContent = connected ? 'Conectado ✅' : 'Conectar API';
-  els.btnConnect.classList.toggle('btn-success', connected);
-  els.btnFetchFollowers.disabled = !connected;
-  els.btnFetchFollowing.disabled = !connected;
+  els.statusIndicator.classList.toggle('connected', connected);
+  els.statusIndicator.title = connected ? 'Conectado' : 'Desconectado';
   
   if (connected) {
-    els.connectionMsg.style.display = 'block';
+    els.btnConnect.textContent = '✅ API Conectada';
+    els.btnConnect.classList.remove('btn-primary');
+    els.btnConnect.classList.add('btn-secondary');
+    els.connectionMsg.textContent = 'Conexión establecida correctamente.';
     els.connectionMsg.className = 'alert alert-success';
-    els.connectionMsg.textContent = 'API Lista para usar';
+    els.connectionMsg.classList.remove('hidden');
+    
+    els.btnFetchFollowers.disabled = false;
+    els.btnFetchFollowing.disabled = false;
   }
 }
 
-// --- LOGIC ---
+// --- CORE LOGIC ---
 
 function setupListeners() {
-  // 1. Connect API
+  
+  // 1. Connect
   els.btnConnect.addEventListener('click', () => {
     const fetchString = els.fetchInput.value;
-    if (!fetchString) return alert('Pega el código fetch primero');
-
+    if (!fetchString) return alert('Por favor pega el código fetch primero.');
+    
     chrome.runtime.sendMessage({ action: 'PARSE_CONFIG', fetchString }, (res) => {
       if (res.success) {
         state.apiConnected = true;
         updateConnectionUI(true);
-        alert(`Conectado como ID: ${res.userId}`);
       } else {
-        alert('Error: ' + res.error);
+        alert(res.error);
       }
     });
   });
 
-  // 2. Fetch Data Buttons
-  ['followers', 'following'].forEach(type => {
-    const btn = type === 'followers' ? els.btnFetchFollowers : els.btnFetchFollowing;
-		console.log(btn)
-    btn.addEventListener('click', () => {
-			console.log('event')
-      els.apiProgress.classList.add('active');
+  // 2. Fetch
+  [els.btnFetchFollowers, els.btnFetchFollowing].forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const type = e.target.id.includes('followers') ? 'followers' : 'following';
+      els.apiProgress.classList.remove('hidden');
+      
       chrome.runtime.sendMessage({ action: 'START_FETCH', type }, (res) => {
-				console.log('message')
         if (!res.success) alert(res.error);
       });
     });
   });
 
-  // 3. File Uploads
-  els.fileFollowers.addEventListener('change', (e) => handleFileUpload(e, 'followers'));
-  els.fileFollowing.addEventListener('change', (e) => handleFileUpload(e, 'following'));
+  // 3. Files
+  els.fileFollowers.addEventListener('change', (e) => handleFile(e, 'followers'));
+  els.fileFollowing.addEventListener('change', (e) => handleFile(e, 'following'));
+  
+  els.btnExportFollowers.addEventListener('click', () => exportCSV(state.followers, 'followers'));
+  els.btnExportFollowing.addEventListener('click', () => exportCSV(state.following, 'following'));
 
   // 4. Compare
   els.btnCompare.addEventListener('click', () => {
     state.nonFollowers = Compare.findNonFollowers(state.followers, state.following);
-    renderResults(state.nonFollowers);
+    renderAnalysis(state.nonFollowers);
+    // Switch tab logic if needed, but we are already there
+    els.analysisResults.classList.remove('hidden');
   });
 
-  // 5. Unfollow All
-  els.btnUnfollowAll.addEventListener('click', () => {
-    if (!confirm(`¿Seguro que quieres dejar de seguir a ${state.nonFollowers.length} usuarios?`)) return;
-    
-    els.unfollowProgress.classList.add('active');
-    chrome.runtime.sendMessage({ 
-      action: 'EXECUTE_UNFOLLOW', 
-      users: state.nonFollowers 
-    });
-  });
+  // 5. Unfollow Buttons
+  els.btnUnfollowSafe.addEventListener('click', () => confirmUnfollow('safe'));
+  els.btnUnfollowNoVerified.addEventListener('click', () => confirmUnfollow('no-verified'));
+  els.btnUnfollowAll.addEventListener('click', () => confirmUnfollow('all'));
 
-  // 6. Exports
-  els.btnExportFollowers.addEventListener('click', () => exportData(state.followers, 'followers'));
-  els.btnExportFollowing.addEventListener('click', () => exportData(state.following, 'following'));
+  // Modal Cancel
+  els.modalCancel.addEventListener('click', () => els.modal.classList.add('hidden'));
 }
 
-function handleFileUpload(event, type) {
-  const file = event.target.files[0];
+function handleFile(e, type) {
+  const file = e.target.files[0];
   if (!file) return;
-
+  
   const reader = new FileReader();
-  reader.onload = (e) => {
-    const data = CSV.parseCSV(e.target.result);
+  reader.onload = (ev) => {
+    const data = CSV.parseCSV(ev.target.result);
     state[type] = data;
     chrome.storage.local.set({ [type === 'followers' ? 'localFollowers' : 'localFollowing']: data });
     updateStats();
-    alert(`Cargados ${data.length} usuarios en ${type}`);
+    alert(`Cargados ${data.length} usuarios.`);
   };
   reader.readAsText(file);
 }
 
-function renderResults(users) {
-  els.resultsArea.style.display = 'block';
-  els.nonFollowersCount.textContent = users.length;
-  els.resultsTable.innerHTML = '';
-
-  users.forEach(u => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>
-        <div class="user-cell">
-          <a href="https://instagram.com/${u.username}" target="_blank" style="color:white;text-decoration:none;">
-            @${u.username}
-          </a>
-        </div>
-      </td>
-      <td>${u.is_verified ? '✅' : ''}</td>
-      <td>
-        <button class="btn btn-danger" style="padding:2px 6px; font-size:10px;" data-id="${u.id}">Unfollow</button>
-      </td>
-    `;
-    
-    // Individual unfollow
-    tr.querySelector('button').addEventListener('click', (e) => {
-      if(confirm(`Unfollow @${u.username}?`)) {
-        chrome.runtime.sendMessage({ action: 'EXECUTE_UNFOLLOW', users: [u] });
-        e.target.textContent = '...';
-        e.target.disabled = true;
-      }
-    });
-
-    els.resultsTable.appendChild(tr);
+function exportCSV(data, filename) {
+  const csvContent = CSV.jsonToCSV(data);
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  chrome.downloads.download({
+    url: url,
+    filename: `${filename}_${new Date().toISOString().slice(0,10)}.csv`
   });
 }
 
-function exportData(data, filename) {
-  chrome.runtime.sendMessage({ action: 'DOWNLOAD_CSV', data, filename });
+function renderAnalysis(users) {
+  els.nonFollowersCount.textContent = users.length;
+  
+  // Initialize Table Component
+  if (!state.tableInstance) {
+    state.tableInstance = new Table('table-container', users, (user, btn) => {
+      // Single unfollow callback
+      if (confirm(`¿Dejar de seguir a @${user.username}?`)) {
+        chrome.runtime.sendMessage({ action: 'EXECUTE_UNFOLLOW', users: [user] });
+        btn.textContent = '...';
+        btn.disabled = true;
+      }
+    });
+  }
+  state.tableInstance.originalData = users;
+  state.tableInstance.currentData = [...users];
+  state.tableInstance.render();
 }
 
-// --- MESSAGE LISTENER (Progress updates) ---
+// --- UNFOLLOW LOGIC ---
 
+function confirmUnfollow(strategy) {
+  let targets = [];
+  let title = '';
+  
+  switch(strategy) {
+    case 'safe':
+      // Excluye verificados Y creadores
+      targets = state.nonFollowers.filter(u => !u.is_verified && !u.is_creator);
+      title = 'Unfollow Seguro (Excluyendo VIPs)';
+      break;
+    case 'no-verified':
+      // Excluye solo verificados
+      targets = state.nonFollowers.filter(u => !u.is_verified);
+      title = 'Unfollow (Excluyendo Verificados)';
+      break;
+    case 'all':
+      targets = state.nonFollowers;
+      title = 'Unfollow A TODOS (Peligroso)';
+      break;
+  }
+
+  if (targets.length === 0) return alert('No hay usuarios que coincidan con este criterio.');
+
+  // Show Modal
+  els.modalTitle.textContent = title;
+  els.modalDesc.textContent = `Se dejarán de seguir ${targets.length} cuentas. Esta acción tomará tiempo para evitar bloqueos. ¿Continuar?`;
+  els.modal.classList.remove('hidden');
+  
+  // Setup Confirm Action
+  els.modalConfirm.onclick = () => {
+    els.modal.classList.add('hidden');
+    startUnfollowProcess(targets);
+  };
+}
+
+function startUnfollowProcess(users) {
+  els.unfollowProgress.classList.remove('hidden');
+  chrome.runtime.sendMessage({ action: 'EXECUTE_UNFOLLOW', users });
+}
+
+// --- MESSAGES ---
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.action === 'FETCH_PROGRESS') {
     const bar = els.apiProgress.querySelector('.progress-fill');
     const text = els.apiProgress.querySelector('.progress-text');
-    
-    // Indeterminate progress mostly, or just showing count
-    text.textContent = `Obtenidos: ${msg.count} (${msg.type})`;
-    bar.style.width = '50%'; // Just show activity
-    if (msg.status === 'complete') bar.style.width = '100%';
+    text.textContent = `Cargando ${msg.count}...`;
+    bar.style.width = msg.status === 'complete' ? '100%' : '50%';
   }
-
+  
   else if (msg.action === 'FETCH_COMPLETE') {
-    els.apiProgress.classList.remove('active');
     state[msg.type] = msg.data;
     updateStats();
-    alert(`Completado: ${msg.count} ${msg.type}`);
+    els.apiProgress.classList.add('hidden');
+    alert(`Completado: ${msg.count} usuarios obtenidos.`);
   }
-
+  
   else if (msg.action === 'UNFOLLOW_PROGRESS') {
     const bar = els.unfollowProgress.querySelector('.progress-fill');
     const text = els.unfollowProgress.querySelector('.progress-text');
-    
     const pct = (msg.current / msg.total) * 100;
     bar.style.width = `${pct}%`;
-    text.textContent = `Procesando ${msg.current}/${msg.total}: ${msg.username}`;
+    text.textContent = `${msg.current}/${msg.total}: ${msg.username}`;
   }
-
+  
   else if (msg.action === 'UNFOLLOW_COMPLETE') {
-    els.unfollowProgress.classList.remove('active');
-    alert(`Proceso finalizado. Se dejaron de seguir ${msg.count} cuentas.`);
-    // Refresh comparison?
+    els.unfollowProgress.classList.add('hidden');
+    alert(`Proceso finalizado. ${msg.count} cuentas dejadas de seguir.`);
+    // Refresh comparison logic here if desired
   }
 });

@@ -1,18 +1,36 @@
 export const CSV = {
   /**
-   * Convierte un array de objetos a string CSV
+   * Convierte un array de objetos a string CSV con todos los campos
    * @param {Array} data - Array de objetos usuarios
    * @returns {string} - Contenido CSV
    */
   jsonToCSV: (data) => {
     if (!data || !data.length) return '';
     
-    const headers = ['id', 'username', 'is_verified', 'profile_url'];
+    // Columnas extendidas
+    const headers = [
+      'id', 
+      'username', 
+      'full_name', 
+      'is_verified', 
+      'is_private', 
+      'is_creator',
+      'profile_url', 
+      'profile_pic_url',
+      'latest_reel_media'
+    ];
+
     const rows = data.map(u => [
       u.id,
       u.username,
-      u.is_verified ? 'Sí' : 'No',
-      `https://instagram.com/${u.username}`
+      // Escapar comillas dobles en nombres
+      (u.full_name || '').replace(/"/g, '""'),
+      u.is_verified ? 'Yes' : 'No',
+      u.is_private ? 'Yes' : 'No',
+      u.is_creator ? 'Yes' : 'No',
+      `https://instagram.com/${u.username}`,
+      u.profile_pic_url || '',
+      u.latest_reel_media || 0
     ]);
 
     return [
@@ -30,16 +48,29 @@ export const CSV = {
     const lines = csvText.trim().split('\n');
     if (lines.length < 2) return [];
 
-    // Asumimos el orden: id, username, is_verified, profile_url
-    // Saltamos la cabecera
+    // Detectar cabeceras para mapeo dinámico si fuera necesario, 
+    // pero por ahora asumimos el orden fijo de nuestra exportación para simplificar
+    // o hacemos un parseo básico.
+    
     return lines.slice(1).map(line => {
-      // Manejo básico de CSV (respetando comillas si las hubiera, aunque el generador es simple)
-      const parts = line.split(',').map(p => p.replace(/^"|"$/g, ''));
+      // Regex simple para CSV que respeta comillas: 
+      // Divide por comas solo si no están dentro de comillas
+      const parts = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+      const cleanParts = parts.map(p => p.replace(/^"|"$/g, '').replace(/""/g, '"'));
+
+      // Fallback si el regex falla (caso simple)
+      const p = cleanParts.length >= 2 ? cleanParts : line.split(',');
+
       return {
-        id: parts[0],
-        username: parts[1],
-        is_verified: parts[2] === 'Sí',
-        profile_url: parts[3]
+        id: p[0],
+        username: p[1],
+        full_name: p[2] || '',
+        is_verified: p[3] === 'Yes',
+        is_private: p[4] === 'Yes',
+        is_creator: p[5] === 'Yes',
+        profile_url: p[6],
+        profile_pic_url: p[7] || '',
+        latest_reel_media: p[8] || 0
       };
     });
   }
