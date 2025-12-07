@@ -1,43 +1,42 @@
-# 🚀 Instagram Follow Manager PRO - Instrucciones
+# 🚀 Instagram Follow Manager PRO
 
-Esta extensión te permite gestionar tus seguidores de Instagram de forma profesional, utilizando tu propia sesión de navegador para máxima seguridad.
+![Demo Preview](https://via.placeholder.com/800x400?text=Insertar+GIF+Demo+Aqui)
+<!-- 💡 Tip: Añade un GIF aquí mostrando el proceso de análisis o la interfaz -->
 
-## 🛠️ Instalación
+> **Gestiona tus conexiones de Instagram de manera profesional.**
+> Una extensión de Chrome potente que analiza tu círculo social de forma segura utilizando tu sesión de navegador local. Sin compartir contraseñas, sin riesgos en la nube.
 
-1.  Abre Google Chrome y ve a `chrome://extensions/`.
-2.  Activa el **"Modo de desarrollador"** (esquina superior derecha).
-3.  Haz clic en **"Cargar descomprimida"**.
-4.  Selecciona la carpeta `extension` que acabamos de generar.
-5.  ¡Listo! Verás el icono de la extensión en tu barra.
+## ✨ Funcionalidades Clave
 
-## 📖 Cómo usar
+*   **🛡️ Privacy First:** Funciona completamente en el cliente (client-side) usando tu sesión activa. Las credenciales nunca salen de tu máquina.
+*   **📊 Smart Analysis:** Compara al instante "Seguidores" vs "Seguidos" para identificar quién no te sigue de vuelta.
+*   **⚡ Safe Automation:** Capacidades de "unfollow" masivo con tiempos de espera aleatorios (delays) para respetar los rate limits.
+*   **💾 Data Export:** Importación/exportación fluida de CSV para análisis de datos externos.
 
-### Paso 1: Obtener Credenciales (Fetch)
-Para que la extensión funcione con tu cuenta, necesita "permiso" para actuar como tú.
-1.  Abre Instagram.com en una pestaña y abre la consola de desarrollador (`F12`).
+## 🛠️ Tech Stack
+
+![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow?style=flat-square&logo=javascript)
+![Chrome Extensions](https://img.shields.io/badge/Chrome_API-Manifest_V3-4285F4?style=flat-square&logo=google-chrome)
+![HTML5/CSS3](https://img.shields.io/badge/UI-HTML5%2FCSS3-orange?style=flat-square)
+
+## � Instrucciones de Uso
+
+### 1. Instalación
+1.  Ve a `chrome://extensions/` y activa el **Developer Mode**.
+2.  Haz clic en **Load Unpacked** y selecciona la carpeta de esta extensión.
+
+### 2. Conectar Cuenta (Importante 🔑)
+Para que la extensión funcione de forma segura, necesita sincronizarse con tu sesión actual de Instagram.
+1.  Abre Instagram.com y pulsa `F12` para abrir las **DevTools**.
 2.  Ve a la pestaña **Network** (Red).
-3.  Haz scroll en tu lista de seguidores o seguidos para que aparezca una petición de red.
-4.  Busca una petición que empiece por `?count=12` o similar (suelen ser endpoints de graphQL o friendships).
-5.  Haz clic derecho sobre ella -> **Copy** -> **Copy as fetch**.
-6.  Abre la extensión, pega ese texto en el área de texto y pulsa **"Conectar API"**.
+3.  Haz scroll en tu lista de seguidores hasta que veas aparecer peticiones.
+4.  Busca una petición que contenga `friendships` o similar (suelen ser endpoints de GraphQL).
+5.  Haz clic derecho -> **Copy** -> **Copy as fetch**.
+6.  Pégalo en la extensión y pulsa "Conectar".
 
-### Paso 2: Obtener Datos
-*   Usa los botones **"⬇ Seguidores"** y **"⬇ Seguidos"** para descargar tu lista actual desde Instagram.
-*   O si ya tienes archivos CSV, súbelos en la pestaña **"Datos"**.
+### 3. Analizar
+Usa los botones para descargar tus listas y ejecuta el comparador para ver estadísticas y limpiar tu lista de seguidos.
 
-### Paso 3: Analizar y Limpiar
-1.  Ve a la pestaña **"Análisis"**.
-2.  Pulsa **"Comparar"**.
-3.  Verás la lista de gente que tú sigues pero no te siguen a ti.
-4.  Puedes dejar de seguirlos uno a uno o usar el botón masivo (¡Úsalo con precaución!).
+## ⚠️ Seguridad y Ética
+Esta herramienta está diseñada para uso personal. Implementa retrasos aleatorios (1-2s) para imitar el comportamiento humano y cumplir con las políticas de uso justo. Todo el análisis ocurre localmente.
 
-## ⚠️ Notas de Seguridad
-*   La extensión usa tiempos de espera aleatorios (1-2 segundos) entre acciones para evitar bloqueos de Instagram.
-*   No abuses de la función "Dejar de seguir a todos". Instagram tiene límites diarios (aprox 150-200 al día).
-*   Tus datos se guardan solo en tu navegador (`LocalStorage`).
-
-## 📂 Estructura de Archivos
-*   `manifest.json`: Configuración de la extensión.
-*   `background.js`: El "cerebro" que hace las llamadas a la API en segundo plano.
-*   `popup.html/js/css`: La interfaz visual.
-*   `utils/`: Funciones de ayuda para CSV y comparaciones.
