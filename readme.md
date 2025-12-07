@@ -1,6 +1,6 @@
 # 🚀 Instagram Follow Manager PRO
 
-![Demo Preview](https://via.placeholder.com/800x400?text=Insertar+GIF+Demo+Aqui)
+![Demo Preview](/assets/demo.png)
 <!-- 💡 Tip: Añade un GIF aquí mostrando el proceso de análisis o la interfaz -->
 
 > **Gestiona tus conexiones de Instagram de manera profesional.**

@@ -16,23 +16,19 @@ export const CSV = {
       'is_private',
       'profile_pic_url',
       'profile_url', // Campo calculado
-      'is_creator',  // Derivado de badges para facilidad, pero guardamos badges raw también
+      'is_creator',
       'fbid_v2',
       'pk_id',
       'strong_id__',
       'profile_pic_id',
       'third_party_downloads_enabled',
-      'latest_reel_media',
-      'account_badges' // Guardado como JSON string si es complejo
+      'latest_reel_media'
     ];
 
     const rows = data.map(u => {
       // Asegurar profile_url
       const profileUrl = `https://instagram.com/${u.username}`;
       
-      // Serializar badges si es array/objeto
-      const badges = typeof u.account_badges === 'object' ? JSON.stringify(u.account_badges).replace(/"/g, '""') : u.account_badges;
-
       return [
         u.id || u.pk,
         u.username,
@@ -47,8 +43,7 @@ export const CSV = {
         u.strong_id__ || '',
         u.profile_pic_id || '',
         u.third_party_downloads_enabled || 0,
-        u.latest_reel_media || 0,
-        `"${badges}"` // Envolver JSON en comillas
+        u.latest_reel_media || 0
       ];
     });
 
@@ -113,9 +108,6 @@ export const CSV = {
         // Conversión de tipos básicos
         if (val === 'true') val = true;
         if (val === 'false') val = false;
-        if (header === 'account_badges' && val.startsWith('{') || val.startsWith('[')) {
-          try { val = JSON.parse(val); } catch(e) {}
-        }
         
         obj[header] = val;
       });

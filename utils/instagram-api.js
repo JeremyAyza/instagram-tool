@@ -130,12 +130,21 @@ export const InstagramAPI = {
         const data = await response.json();
 
         // Mapeo extendido: Guardamos TODO lo que viene
-        const newUsers = data.users.map(u => ({
-          ...u, // Spread de todos los campos originales
-          id: u.pk, // Asegurar ID estándar
-          is_creator: u.account_badges?.some(b => b.type === 'creator') || false,
-          profile_url: `https://instagram.com/${u.username}`
-        }));
+        const newUsers = data.users.map(u => {
+          // Extraemos account_badges para calcular is_creator, pero NO lo guardamos en el objeto final
+          const isCreator = u?.account_badges?.some(b => b.type === 'creator') || false;
+          
+          // Creamos copia limpia sin account_badges
+          const cleanUser = { ...u };
+          delete cleanUser.account_badges; 
+
+          return {
+            ...cleanUser,
+            id: u.pk, // Asegurar ID estándar
+            is_creator: isCreator,
+            profile_url: `https://instagram.com/${u.username}`
+          };
+        });
 
         results.push(...newUsers);
         nextId = data.next_max_id;
