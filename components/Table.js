@@ -70,12 +70,12 @@ export class Table {
       else if (u.is_creator) userType = 'Creador';
       else if (u.is_private) userType = 'Privado';
 
-      // Image Handling - Button instead of IMG to avoid CORS
+      // Image Handling
       const hasImage = u.profile_pic_url && u.profile_pic_url.startsWith('http');
 
       tr.innerHTML = `
         <td style="text-align: center;">
-          <!-- Image Button placeholder -->
+          <!-- Image Link placeholder -->
         </td>
         <td>
           <div class="user-info">
@@ -93,14 +93,18 @@ export class Table {
         </td>
       `;
 
-      // Inject Image Button
+      // Inject Image Link
       const imgCell = tr.querySelector('td:first-child');
       if (hasImage) {
-        const btnImg = Buttons.iconBtn('📷', 'Abrir foto en nueva pestaña', () => {
-          window.open(u.profile_pic_url, '_blank');
-        }, '#a0a0a0');
-        btnImg.style.fontSize = '14px';
-        imgCell.appendChild(btnImg);
+        const linkImg = document.createElement('a');
+        linkImg.href = u.profile_pic_url;
+        linkImg.target = '_blank';
+        linkImg.title = 'Abrir foto en nueva pestaña';
+        linkImg.textContent = '📷';
+        linkImg.style.fontSize = '14px';
+        linkImg.style.textDecoration = 'none';
+        linkImg.style.color = '#a0a0a0';
+        imgCell.appendChild(linkImg);
       } else {
         imgCell.innerHTML = '<span style="color:#444; font-size:10px;">N/A</span>';
       }
